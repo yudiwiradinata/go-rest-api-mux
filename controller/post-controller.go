@@ -1,34 +1,59 @@
 package controller
 
 import (
+	"encoding/json"
+	"math/rand"
+	"net/http"
+
 	"github.com/yudiwiradinata/go-rest-api-mux/entity"
+	"github.com/yudiwiradinata/go-rest-api-mux/errors"
 	"github.com/yudiwiradinata/go-rest-api-mux/service"
 )
 
 var (
-	postService service.PostService = service.NewPostService()
+	postService service.PostService
 )
 
 type postController struct{}
 
 type PostController interface {
-	Validate(post *entity.Post) error
-	Create(post *entity.Post) (*entity.Post, error)
-	FindAll() ([]entity.Post, error)
+	GetPosts(resp http.ResponseWriter, req *http.Request)
+	AddPost(resp http.ResponseWriter, req *http.Request)
 }
 
-func NewPostController() PostController {
+func NewPostController(service service.PostService) PostController {
+	postService = service
 	return &postController{}
 }
 
-func (*postController) Validate(post *entity.Post) error {
-	return postService.Validate(post)
+func (*postController) GetPosts(resp http.ResponseWriter, req *http.Request) {
+	resp.Header().Set("Content-Type", "application/json")
+	posts, err := postService.FindAll()
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(resp).Encode(errors.ServiceError{Message: "Error getting the posts"})
+	}
+	resp.WriteHeader(http.StatusOK)
+	json.NewEncoder(resp).Encode(posts)
 }
 
-func (*postController) Create(post *entity.Post) (*entity.Post, error) {
-	return postService.Create(post)
-}
+func (*postController) AddPost(resp http.ResponseWriter, req *http.Request) {
+	var post entity.Post
+	err := json.NewDecoder(req.Body).Decode(&post)
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(resp).Encode(errors.ServiceError{Message: "error unmarshaling the request"})
+		return
+	}
 
-func (*postController) FindAll() ([]entity.Post, error) {
-	return postService.FindAll()
+	post.ID = rand.Int63()
+	_, err = postService.Create(&post)
+	if err != nil {
+		resp.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(resp).Encode(errors.ServiceError{Message: "error save the post"})
+		return
+	}
+	resp.Header().Set("Content-Type", "application/json")
+	resp.WriteHeader(http.StatusOK)
+	json.NewEncoder(resp).Encode(post)
 }

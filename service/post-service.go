@@ -10,7 +10,7 @@ import (
 type service struct{}
 
 var (
-	postRepository repository.PostRepository = repository.NewFirestoreRepository()
+	postRepository repository.PostRepository
 )
 
 type PostService interface {
@@ -19,7 +19,8 @@ type PostService interface {
 	FindAll() ([]entity.Post, error)
 }
 
-func NewPostService() PostService {
+func NewPostService(repository repository.PostRepository) PostService {
+	postRepository = repository
 	return &service{}
 }
 
