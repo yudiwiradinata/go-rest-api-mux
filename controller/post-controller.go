@@ -1,39 +1,34 @@
 package controller
 
 import (
-	"errors"
-
 	"github.com/yudiwiradinata/go-rest-api-mux/entity"
+	"github.com/yudiwiradinata/go-rest-api-mux/service"
 )
 
-type PostService interface {
+var (
+	postService service.PostService = service.NewPostService()
+)
+
+type postController struct{}
+
+type PostController interface {
 	Validate(post *entity.Post) error
 	Create(post *entity.Post) (*entity.Post, error)
 	FindAll() ([]entity.Post, error)
 }
 
-type postService struct{}
-
-func NewPostService() PostService {
-	return &postService{}
+func NewPostController() PostController {
+	return &postController{}
 }
 
-func (*postService) Validate(post *entity.Post) error {
-	if post != nil {
-		return errors.New("Data post is empty")
-	}
-
-	if post.Title == "" {
-		return errors.New("Data post title is empty")
-	}
-
-	return nil
+func (*postController) Validate(post *entity.Post) error {
+	return postService.Validate(post)
 }
 
-func (*postService) Create(post *entity.Post) (*entity.Post, error) {
-
+func (*postController) Create(post *entity.Post) (*entity.Post, error) {
+	return postService.Create(post)
 }
 
-func (*postService) FindAll() ([]entity.Post, error) {
-
+func (*postController) FindAll() ([]entity.Post, error) {
+	return postService.FindAll()
 }

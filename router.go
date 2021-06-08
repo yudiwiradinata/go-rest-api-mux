@@ -5,17 +5,17 @@ import (
 	"math/rand"
 	"net/http"
 
+	"github.com/yudiwiradinata/go-rest-api-mux/controller"
 	"github.com/yudiwiradinata/go-rest-api-mux/entity"
-	"github.com/yudiwiradinata/go-rest-api-mux/repository"
 )
 
 var (
-	postRepository repository.PostRepository = repository.NewFirestoreRepository()
+	postController controller.PostController = controller.NewPostController()
 )
 
 func getPosts(resp http.ResponseWriter, req *http.Request) {
 	resp.Header().Set("Content-Type", "application/json")
-	posts, err := postRepository.FindAll()
+	posts, err := postController.FindAll()
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{"error": "error get the posts"}`))
@@ -35,7 +35,7 @@ func addPost(resp http.ResponseWriter, req *http.Request) {
 	}
 
 	post.ID = rand.Int63()
-	_, err = postRepository.Save(&post)
+	_, err = postController.Create(&post)
 	if err != nil {
 		resp.WriteHeader(http.StatusInternalServerError)
 		resp.Write([]byte(`{"error": "error save the posts"}`))
